@@ -1,5 +1,6 @@
 import { terminal } from "terminal-kit";
 import App from "..";
+import { sleep } from "../libs/others";
 import Page from "../libs/page";
 
 class AddTorrent extends Page {
@@ -16,22 +17,24 @@ class AddTorrent extends Page {
     terminal.green("Enter your magnet link: ");
     terminal.inputField({}, (err, input) => {
       if (err) process.exit();
+      console.clear();
       this.addTorrent(input);
-      App.changePage("list");
     });
   }
 
-  addTorrent(url: string) {
+  async addTorrent(url: string) {
     if (!url.length) {
-      App.changePage("list");
+      App.changePage("dashboard");
       return;
     }
-    App.addTorrent(url)
+    await Promise.resolve(App.addTorrent(url))
       .then(() => {
-        App.changePage("list");
+        App.changePage("dashboard");
       })
-      .catch(() => {
-        terminal.red("Torrent not founded!");
+      .catch(async () => {
+        terminal.red("Torrent not founded... returning to dashboard");
+        await sleep(5000);
+        App.changePage("dashboard");
       });
   }
 

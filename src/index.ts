@@ -1,12 +1,13 @@
 #!/usr/bin/env node
+import { EventEmitter } from "stream";
 import { terminal } from "terminal-kit";
 import WebTorrent, { Torrent } from "webtorrent";
 import { CreateMenu } from "./libs/menu";
 import Page from "./libs/page";
-import { addTorrent, editTorrent, list } from "./pages";
+import { addTorrent, editTorrent, dashboard, settings } from "./pages";
 import Settings, { SettingsOptions } from "./settings";
 
-type pagesType = "list" | "addTorrent" | "editTorrent";
+type pagesType = "dashboard" | "addTorrent" | "editTorrent" | "settings";
 
 export default class App {
   static page: Page;
@@ -20,18 +21,20 @@ export default class App {
     terminal.white("Initializing Terminal Torrent...\n\n");
     terminal.green("Press CTRL+O to open menu\n");
     terminal.green("Press CTRL+C to exit\n");
-    setTimeout(() => this.init(), 8000);
+    setTimeout(() => this.init(), 5000);
   }
 
-  public init() {
+  public async init() {
     App.settings.init();
+
+    await Promise.all(
+      App.settings.getSettings().torrents.map(async (torrent) => {
+        return await App.addTorrent(torrent.url, torrent.paused);
+      })
+    );
+
     this.handleInputs();
-
-    App.settings.getSettings().torrents.forEach((torrent) => {
-      App.addTorrent(torrent.url, torrent.paused);
-    });
-
-    App.changePage("list");
+    App.changePage("dashboard");
     App.webtorrent.on("error", () => {});
   }
 
@@ -45,6 +48,9 @@ export default class App {
 
         if (torrent.name) resolve(true);
         else reject(false);
+      });
+      this.webtorrent.on("error", () => {
+        reject(false);
       });
     });
   }
@@ -80,11 +86,14 @@ export default class App {
       case "addTorrent":
         this.page = new addTorrent();
         break;
-      case "list":
-        this.page = new list();
+      case "dashboard":
+        this.page = new dashboard();
         break;
       case "editTorrent":
         this.page = new editTorrent();
+        break;
+      case "settings":
+        this.page = new settings();
         break;
     }
 
@@ -101,7 +110,7 @@ export default class App {
   public handleInputs() {
     terminal.grabInput({ mouse: "button" });
 
-    terminal.on("key", (name) => {
+    terminal.on("key", (name: string) => {
       switch (name) {
         case "CTRL_O":
         case "CTRL_Q":
@@ -121,4 +130,5 @@ export default class App {
   }
 }
 
+EventEmitter.defaultMaxListeners = 1000;
 new App();

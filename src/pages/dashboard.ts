@@ -9,11 +9,11 @@ import {
 import { CreateMenu } from "../libs/menu";
 import Page from "../libs/page";
 
-class List extends Page {
+class Dashboard extends Page {
   list: Table.Table;
 
   constructor() {
-    super("list");
+    super("dashboard");
   }
 
   init() {
@@ -22,14 +22,18 @@ class List extends Page {
 
   update() {
     console.clear();
-    this.list.map(() => {
+    this.list.forEach(() => {
       this.list.pop();
     });
-    this.getTorrents().map((torrent) => {
+    this.getTorrents().forEach((torrent) => {
       if (this.list.some((item) => item[0] === torrent[0])) return;
       this.list.push(torrent);
     });
-    terminal(this.list.render());
+    if (
+      this.getTorrents().length === App.settings.getSettings().torrents.length
+    )
+      terminal(this.list.render());
+    else terminal.yellow("Loading... Please wait...");
   }
 
   getTorrents() {
@@ -105,4 +109,4 @@ class List extends Page {
   }
 }
 
-export default List;
+export default Dashboard;

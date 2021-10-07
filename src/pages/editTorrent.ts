@@ -10,7 +10,7 @@ class EditTorrent extends Page {
   }
 
   init() {
-    if (!App.torrents.length) App.changePage("list");
+    if (!App.torrents.length) App.changePage("dashboard");
     this.draw();
   }
 
@@ -47,13 +47,13 @@ class EditTorrent extends Page {
           break;
         case 1:
           App.removeTorrent(torrent.magnetURI);
-          App.changePage("list");
+          App.changePage("dashboard");
           break;
         case 2:
           addPeer(torrent);
           break;
         default:
-          App.changePage("list");
+          App.changePage("dashboard");
           break;
       }
     });

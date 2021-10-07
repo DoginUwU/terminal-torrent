@@ -22,13 +22,16 @@ const CreateMenu = () => {
 
     switch (response.selectedIndex) {
       case 0:
-        App.changePage("list");
+        App.changePage("dashboard");
         break;
       case 1:
         App.changePage("addTorrent");
         break;
       case 2:
         App.changePage("editTorrent");
+        break;
+      case 3:
+        App.changePage("settings");
         break;
       case 5:
         App.exit();
