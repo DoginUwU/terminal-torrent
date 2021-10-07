@@ -11,7 +11,7 @@ class EditTorrent extends Page {
 
   init() {
     if (!App.torrents.length) App.changePage("dashboard");
-    this.draw();
+    else this.draw();
   }
 
   draw() {

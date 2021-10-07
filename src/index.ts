@@ -2,6 +2,8 @@
 import { EventEmitter } from "stream";
 import { terminal } from "terminal-kit";
 import WebTorrent, { Torrent } from "webtorrent";
+import fs from "fs";
+import parseTorrent from "parse-torrent";
 import { CreateMenu } from "./libs/menu";
 import Page from "./libs/page";
 import { addTorrent, editTorrent, dashboard, settings } from "./pages";
@@ -16,12 +18,32 @@ export default class App {
   static settings = new Settings();
 
   constructor() {
+    const args = process.argv.slice(2);
     console.clear();
-    terminal.red("Please, use terminal in fullscreen\n");
-    terminal.white("Initializing Terminal Torrent...\n\n");
-    terminal.green("Press CTRL+O to open menu\n");
-    terminal.green("Press CTRL+C to exit\n");
-    setTimeout(() => this.init(), 5000);
+    if (!args[0]) {
+      terminal.red("Please, use terminal in fullscreen\n");
+      terminal.white("Initializing Terminal Torrent...\n\n");
+      terminal.green("Press CTRL+O to open menu\n");
+      terminal.green("Press CTRL+C to exit\n");
+      setTimeout(() => this.init(), 5000);
+    } else {
+      this.fileAssociation(args[0]);
+    }
+  }
+
+  async fileAssociation(path: string) {
+    if (!fs.existsSync(path)) {
+      await this.init();
+      return;
+    }
+    await this.init();
+
+    const infoHash = parseTorrent(fs.readFileSync(path)).infoHash;
+
+    const uri = parseTorrent.toMagnetURI({
+      infoHash,
+    });
+    App.changePage("addTorrent", uri);
   }
 
   public async init() {
@@ -77,14 +99,14 @@ export default class App {
     this.updateTorrentSettings();
   }
 
-  public static changePage(name: pagesType) {
+  public static changePage(name: pagesType, props?: any) {
     terminal.clear();
     terminal.eraseDisplay();
     if (!!this.page) this.page.destroy();
 
     switch (name) {
       case "addTorrent":
-        this.page = new addTorrent();
+        this.page = new addTorrent(props);
         break;
       case "dashboard":
         this.page = new dashboard();

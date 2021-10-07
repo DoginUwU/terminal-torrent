@@ -19,18 +19,19 @@ class Settings {
 
   init() {
     this.pathSettings = path.join(os.homedir(), "Documents", "TerminalTorrent");
-    this.pathDownloads = path.join(os.homedir(), "Downloads");
 
     if (!fs.existsSync(this.pathSettings)) {
       fs.mkdirSync(this.pathSettings);
       fs.writeFileSync(
         path.join(this.pathSettings, "settings.json"),
         JSON.stringify({
-          pathDownloads: this.pathDownloads,
+          pathDownloads: path.join(os.homedir(), "Downloads"),
           torrents: [],
         } as SettingsOptions)
       );
     }
+
+    this.pathDownloads = this.getSettings().pathDownloads;
   }
 
   getSettings(): SettingsOptions {
@@ -47,6 +48,7 @@ class Settings {
       path.join(this.pathSettings, "settings.json"),
       JSON.stringify({ ...settingsFile, ...settings })
     );
+    this.pathDownloads = this.getSettings().pathDownloads;
   }
 }
 

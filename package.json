@@ -15,7 +15,6 @@
     ],
     "scripts": "build/**/*",
     "targets": [
-      "node16-macos-x64",
       "node16-win-x64"
     ]
   },
@@ -33,6 +32,7 @@
     "colors": "^1.4.0",
     "fs": "^0.0.1-security",
     "os": "^0.1.2",
+    "parse-torrent": "^9.1.4",
     "path": "^0.12.7",
     "readline-sync": "^1.4.10",
     "terminal-kit": "^2.1.6",

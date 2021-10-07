@@ -4,9 +4,12 @@ import { sleep } from "../libs/others";
 import Page from "../libs/page";
 
 class AddTorrent extends Page {
-  constructor() {
+  uri?: string;
+
+  constructor(uri?: string) {
     super("addTorrent");
     this.disableGlobalMenu = true;
+    this.uri = uri;
   }
 
   init() {
@@ -15,11 +18,16 @@ class AddTorrent extends Page {
 
   draw() {
     terminal.green("Enter your magnet link: ");
-    terminal.inputField({}, (err, input) => {
-      if (err) process.exit();
-      console.clear();
-      this.addTorrent(input);
-    });
+    terminal.inputField(
+      {
+        default: this.uri,
+      },
+      (err, input) => {
+        if (err) process.exit();
+        console.clear();
+        this.addTorrent(input);
+      }
+    );
   }
 
   async addTorrent(url: string) {
