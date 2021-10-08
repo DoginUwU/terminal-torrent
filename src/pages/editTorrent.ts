@@ -1,6 +1,6 @@
 import { terminal } from "terminal-kit";
 import { Torrent } from "webtorrent";
-import App from "..";
+import App, { ExtendedTorrent } from "..";
 import Page from "../libs/page";
 
 class EditTorrent extends Page {
@@ -27,23 +27,27 @@ class EditTorrent extends Page {
     );
   }
 
-  drawMenu(torrent: Torrent) {
+  drawMenu(torrent: ExtendedTorrent) {
     const addPeer = this.addPeer.bind(this);
-    const pauseTitle = torrent.paused ? "Resume" : "Pause";
+    const pauseTitle = torrent.destroyed ? "Resume" : "Pause";
     console.clear();
     const items = [pauseTitle, "Remove torrent", "Add peer", "Go back"];
 
     this.drawInformations(torrent);
 
-    terminal.singleColumnMenu(items, (error, response) => {
+    terminal.singleColumnMenu(items, async (error, response) => {
       if (error) process.exit();
 
       switch (response.selectedIndex) {
         case 0:
-          if (torrent.paused) torrent.resume();
-          else torrent.pause();
+          if (torrent.destroyed) {
+            console.clear();
+            terminal.green("Resuming torrent...");
+            await App.addTorrent(torrent.magnetURI, false);
+          } else App.destroyTorrent(torrent);
+
           App.updateTorrentSettings();
-          this.drawMenu(torrent);
+          App.changePage("dashboard");
           break;
         case 1:
           App.removeTorrent(torrent.magnetURI);

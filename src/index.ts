@@ -11,10 +11,14 @@ import Settings, { SettingsOptions } from "./settings";
 
 type pagesType = "dashboard" | "addTorrent" | "editTorrent" | "settings";
 
+export interface ExtendedTorrent extends Torrent {
+  destroyed?: boolean;
+}
+
 export default class App {
   static page: Page;
-  static webtorrent = new WebTorrent();
-  static torrents: Array<Torrent> = [];
+  static webtorrent = new WebTorrent({ utp: false });
+  static torrents: Array<ExtendedTorrent> = [];
   static settings = new Settings();
 
   constructor() {
@@ -64,12 +68,13 @@ export default class App {
     return new Promise((resolve, reject) => {
       const path = App.settings.pathDownloads;
       this.webtorrent.add(url, { path }, (torrent) => {
-        if (paused) torrent.pause();
+        this.torrents = this.torrents.filter(
+          (t) => t.magnetURI !== torrent.magnetURI
+        );
         this.torrents.push(torrent);
         this.updateTorrentSettings();
 
-        if (torrent.name) resolve(true);
-        else reject(false);
+        resolve(true);
       });
       this.webtorrent.on("error", () => {
         reject(false);
@@ -89,6 +94,15 @@ export default class App {
     this.settings.updateSettings({
       torrents,
     } as SettingsOptions);
+  }
+
+  public static destroyTorrent(torrent: Torrent) {
+    this.webtorrent.remove(torrent.magnetURI);
+    this.torrents = this.torrents.map((t) => {
+      if (t.magnetURI === torrent.magnetURI) t.destroyed = true;
+
+      return t;
+    });
   }
 
   public static removeTorrent(torrentId: string) {
