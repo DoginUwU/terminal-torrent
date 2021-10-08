@@ -1,6 +1,6 @@
 {
   "name": "terminal-torrent",
-  "version": "0.01",
+  "version": "0.02",
   "main": "build/index.js",
   "bin": "build/index.js",
   "license": "MIT",
