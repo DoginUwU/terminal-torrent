@@ -6,17 +6,19 @@ import Page from "../libs/page";
 class AddTorrent extends Page {
   uri?: string;
 
-  constructor(uri?: string) {
+  constructor() {
     super("addTorrent");
     this.disableGlobalMenu = true;
-    this.uri = uri;
   }
-
-  init() {
+  
+  init(uri?: string) {
+    super.init();
+    this.uri = uri;
     this.draw();
   }
 
   draw() {
+    console.clear();
     terminal.green("Enter your magnet link: ");
     terminal.inputField(
       {

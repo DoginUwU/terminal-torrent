@@ -1,21 +1,30 @@
+import { terminal } from "terminal-kit";
+
 abstract class Page {
   name: string;
-  interval: any;
+  interval: NodeJS.Timer;
+  initialized = false;
   blockUpdate = false;
   disableGlobalMenu = false;
 
   constructor(name: string) {
-    process.stdout.write("\u001b[2J\u001b[0;0H");
     this.name = name;
-    this.interval = setInterval(() => {
-      if (!this.blockUpdate) this.update();
-    }, 500);
   }
-  abstract init(): void;
+  public init(props?: any) {
+    this.initialized = true;
+    this.blockUpdate = false;
+    console.clear();
+    terminal.yellow("Loading... Please wait...");
+
+    this.interval = setInterval(() => {
+      if (!this.blockUpdate && this.initialized) this.update();
+    }, 1500);
+  }
   abstract draw(): void;
   abstract update(): void;
   destroy() {
     clearInterval(this.interval);
+    this.interval.unref();
   }
 }
 

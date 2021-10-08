@@ -6,32 +6,27 @@ import {
   formatDownloadingTitle,
   formatMilliseconds,
 } from "../libs/formatter";
-import { CreateMenu } from "../libs/menu";
 import Page from "../libs/page";
 
 class Dashboard extends Page {
   list: Table.Table;
+  torrents: Array<any>
 
   constructor() {
     super("dashboard");
   }
 
   init() {
+    super.init();
     this.draw();
   }
 
   update() {
     console.clear();
-    this.list.forEach(() => {
-      this.list.pop();
-    });
-    this.getTorrents().forEach((torrent) => {
-      if (this.list.some((item) => item[0] === torrent[0])) return;
-      this.list.push(torrent);
-    });
-    if (
-      this.getTorrents().length === App.settings.getSettings().torrents.length
-    )
+    this.list.length = 0;
+    this.torrents = this.getTorrents();
+
+    if (this.torrents.length === App.settings.getSettings().torrents.length)
       terminal(this.list.render());
     else terminal.yellow("Loading... Please wait...");
   }
@@ -41,7 +36,7 @@ class Dashboard extends Page {
 
     return (
       torrents.map((torrent, index) => {
-        return [
+        const newTorrent = [
           index.toString(),
           torrent.name,
           formatDownloadingTitle(torrent),
@@ -52,6 +47,9 @@ class Dashboard extends Page {
           torrent.ratio,
           torrent.numPeers,
         ];
+        this.list.push(newTorrent)
+
+        return newTorrent;
       }) || []
     );
   }

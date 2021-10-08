@@ -1,13 +1,13 @@
 #!/usr/bin/env node
-import { EventEmitter } from "stream";
 import { terminal } from "terminal-kit";
 import WebTorrent, { Torrent } from "webtorrent";
-import fs from "fs";
+import fs, {promises as fsPromise} from "fs";
 import parseTorrent from "parse-torrent";
 import { CreateMenu } from "./libs/menu";
 import Page from "./libs/page";
-import { addTorrent, editTorrent, dashboard, settings } from "./pages";
 import Settings, { SettingsOptions } from "./settings";
+import path from "path";
+import { limitProcessMemory } from "./utils/memory_limiter";
 
 type pagesType = "dashboard" | "addTorrent" | "editTorrent" | "settings";
 
@@ -16,8 +16,11 @@ export interface ExtendedTorrent extends Torrent {
 }
 
 export default class App {
+  static pages: Array<Page> = [];
   static page: Page;
-  static webtorrent = new WebTorrent({ utp: false });
+  static webtorrent = new WebTorrent({ utp: false, maxConns: 40, tracker: {
+    wrtc: false
+  } });
   static torrents: Array<ExtendedTorrent> = [];
   static settings = new Settings();
 
@@ -36,11 +39,8 @@ export default class App {
   }
 
   async fileAssociation(path: string) {
-    if (!fs.existsSync(path)) {
-      await this.init();
-      return;
-    }
     await this.init();
+    if (!fs.existsSync(path)) return;
 
     const infoHash = parseTorrent(fs.readFileSync(path)).infoHash;
 
@@ -55,22 +55,27 @@ export default class App {
 
     await Promise.all(
       App.settings.getSettings().torrents.map(async (torrent) => {
-        return await App.addTorrent(torrent.url, torrent.paused);
+        return await App.addTorrent(torrent.url);
       })
     );
+
+    const files = await fsPromise.readdir(path.join(__dirname, "pages"))
+    await Promise.all(files.map(async (file) => {
+      const Page = await import(`./pages/${file}`);
+      const page = new Page.default;
+      App.pages.push(page);
+    }));
 
     this.handleInputs();
     App.changePage("dashboard");
     App.webtorrent.on("error", () => {});
   }
 
-  public static addTorrent(url: string, paused?: boolean) {
+  public static addTorrent(url: string) {
     return new Promise((resolve, reject) => {
       const path = App.settings.pathDownloads;
       this.webtorrent.add(url, { path }, (torrent) => {
-        this.torrents = this.torrents.filter(
-          (t) => t.magnetURI !== torrent.magnetURI
-        );
+        this.torrents = this.torrents.filter((t) => t.magnetURI !== torrent.magnetURI);
         this.torrents.push(torrent);
         this.updateTorrentSettings();
 
@@ -106,7 +111,9 @@ export default class App {
   }
 
   public static removeTorrent(torrentId: string) {
-    this.webtorrent.remove(torrentId);
+    try {
+      this.webtorrent.remove(torrentId);
+    } catch (error) {}
     this.torrents = this.torrents.filter(
       (torrent) => torrent.magnetURI !== torrentId
     );
@@ -114,26 +121,11 @@ export default class App {
   }
 
   public static changePage(name: pagesType, props?: any) {
-    terminal.clear();
-    terminal.eraseDisplay();
     if (!!this.page) this.page.destroy();
 
-    switch (name) {
-      case "addTorrent":
-        this.page = new addTorrent(props);
-        break;
-      case "dashboard":
-        this.page = new dashboard();
-        break;
-      case "editTorrent":
-        this.page = new editTorrent();
-        break;
-      case "settings":
-        this.page = new settings();
-        break;
-    }
+    this.page = this.pages.find((page) => page.name === name);
 
-    this.page.init();
+    this.page.init(props);
   }
 
   public openGlobalMenu() {
@@ -166,5 +158,4 @@ export default class App {
   }
 }
 
-EventEmitter.defaultMaxListeners = 1000;
-new App();
+limitProcessMemory(3000, 1e+9, () => new App(), () => App.exit())

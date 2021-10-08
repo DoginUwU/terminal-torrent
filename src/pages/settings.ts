@@ -11,10 +11,12 @@ class Settings extends Page {
   }
 
   init() {
+    super.init();
     this.draw();
   }
 
   draw() {
+    console.clear();
     const items = ["Change download path", "Go back"];
 
     terminal.singleColumnMenu(items, (error, response) => {

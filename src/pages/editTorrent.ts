@@ -10,6 +10,7 @@ class EditTorrent extends Page {
   }
 
   init() {
+    super.init();
     if (!App.torrents.length) App.changePage("dashboard");
     else this.draw();
   }
@@ -43,7 +44,7 @@ class EditTorrent extends Page {
           if (torrent.destroyed) {
             console.clear();
             terminal.green("Resuming torrent...");
-            await App.addTorrent(torrent.magnetURI, false);
+            await App.addTorrent(torrent.magnetURI);
           } else App.destroyTorrent(torrent);
 
           App.updateTorrentSettings();
